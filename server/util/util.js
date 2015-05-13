@@ -61,11 +61,9 @@ module.exports.json = function (res, data) {
         // 正常返回
         ret = {
             retcode: 0,
-            result: {
-                errno: 0,
-                result: data.json || {}
-            }
+            result: data.json || {}
         };
+        ret.result.errno = 0;
     } else if(data.errType === 1) {
         // 错误返回
         ret  ={

@@ -90,7 +90,7 @@ module.exports.query = function (req, res, next) {
     });
 
     Work.find(_contions)
-        .select('name wor_data')
+        .select('name work_data')
         .skip(_skip)
         .limit(size)
         .sort({'update_time': 1})

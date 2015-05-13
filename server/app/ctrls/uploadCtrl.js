@@ -11,62 +11,77 @@ var userID = 'ID_USER_1';
 var workID = '5535c53161c76a990cc21e31';
 
 module.exports.upload = function(req, res) {
+    var imgBase64Str = req.body.img;
+    var form;
+    var cndFolder = util.getCdnDir()+[userID, workID].join('/');
 
-    var form = new formidable.IncomingForm();
-
-    //todo
-    form.uploadDir = util.getCdnDir()+[userID, workID].join('/');
-    form.keepExtensions = true;
-
-    if(! fs.exists(form.uploadDir)) {
-        util.mkdirsSync(form.uploadDir);
+    if(! fs.exists(cndFolder)) {
+        util.mkdirsSync(cndFolder);
     }
 
-    form.parse(req, function (err, fields, files) {
-        var img = files.uploadimg;
-        var imgData = fields.img;
+    // post
+    if(!imgBase64Str) {
+        form = new formidable.IncomingForm();
+        //todo
+        form.uploadDir = cndFolder;
+        form.keepExtensions = true;
+        form.parse(req, function (err, fields, files) {
+            var img = files.uploadimg;
+            var imgData = fields.img;
 
-        var imgReName;
+            var imgReName;
 
-        if (err) {
-            util.json(res, {
-                errType: 1,
-                errCode:5
-            });
-            return;
-        }
-
-        if (! imgData) {
-            var extName = '';  //后缀名
-
-            switch (img.type) {
-                case 'image/pjpeg':
-                    extName = 'jpg';
-                    break;
-                case 'image/jpeg':
-                    extName = 'jpg';
-                    break;
-                case 'image/png':
-                    extName = 'png';
-                    break;
-                case 'image/x-png':
-                    extName = 'png';
-                    break;
-            }
-
-            if (extName.length == 0) {
-                console.log('不支持的图片类型');
+            if (err) {
+                util.json(res, {
+                    errType: 1,
+                    errCode:5
+                });
                 return;
             }
 
-            imgReName = path.join(form.uploadDir, util.guid() + '.' + extName);
-            fs.renameSync(img.path, imgReName);
+            if (! imgData) {
+                var extName = '';  //后缀名
 
-        } else {
-            imgReName = path.join(form.uploadDir, util.guid() + '.' + util.getBase64ExtName(imgData));
-            // base64 上传
-            fs.writeFileSync(imgReName, new Buffer(imgData.replace(/^data:(.*);base64,/, ''), "base64"));
-        }
+                switch (img.type) {
+                    case 'image/pjpeg':
+                        extName = 'jpg';
+                        break;
+                    case 'image/jpeg':
+                        extName = 'jpg';
+                        break;
+                    case 'image/png':
+                        extName = 'png';
+                        break;
+                    case 'image/x-png':
+                        extName = 'png';
+                        break;
+                }
+
+                if (extName.length == 0) {
+                    console.log('不支持的图片类型');
+                    return;
+                }
+
+                imgReName = path.join(form.uploadDir, util.guid() + '.' + extName);
+                fs.renameSync(img.path, imgReName);
+
+            } else {
+                imgReName = path.join(form.uploadDir, util.guid() + '.' + util.getBase64ExtName(imgData));
+                // base64 上传
+                fs.writeFileSync(imgReName, new Buffer(imgData.replace(/^data:(.*);base64,/, ''), "base64"));
+            }
+
+            util.json(res, {
+                errType: 0,
+                json: {
+                    url: util.uriChange(imgReName)
+                }
+            });
+        });
+    } else {
+        imgReName = path.join(cndFolder, util.guid() + '.' + util.getBase64ExtName(imgBase64Str));
+        // base64 上传
+        fs.writeFileSync(imgReName, new Buffer(imgBase64Str.replace(/^data:(.*);base64,/, ''), "base64"));
 
         util.json(res, {
             errType: 0,
@@ -74,5 +89,11 @@ module.exports.upload = function(req, res) {
                 url: util.uriChange(imgReName)
             }
         });
-    });
+    }
+
+
+
+
+
+
 };
