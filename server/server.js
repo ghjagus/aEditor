@@ -4,6 +4,9 @@ var path = require('path');
 var port = process.env.PORT || 3000;
 var util = require('./util/util');
 
+// 配置
+require('./config/projectConf')(app);
+
 // templates
 require('./config/templates')(app, path.join(__dirname, 'app/views'));
 
@@ -18,6 +21,8 @@ require('./config/middlewares')(app);
 
 //routes
 require('./config/routes')(app);
+
+
 
 // exceptions
 require('./config/exceptions')(app);
