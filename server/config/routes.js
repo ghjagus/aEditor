@@ -7,6 +7,10 @@ var oauth = require('../app/ctrls/oauthCtrl');
 
 module.exports = function (app) {
 
+    app.get('/forlogin', function (req, res) {
+        res.render('login');
+    });
+
     /*绑定CGI接口*/
     // 作品元件增加，更新
     app.post('/upsert', ctrls.upsert);

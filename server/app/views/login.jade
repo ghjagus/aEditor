@@ -2,7 +2,7 @@ extends layout/layout
 block content
     h1 登录
         div
-            iframe(src="http://account.alloyteam.com/page/ptlogin?redirect=http://aeditor.alloyteam.com:3000/login", style="width:500px;height:500px" id="loginFrame")
+            iframe(src="http://account.alloyteam.com/page/ptlogin?redirect=http://aeditor.alloyteam.com:3000/login?atrq=12", style="width:500px;height:500px" id="loginFrame")
         script.
             document.domain = 'alloyteam.com';
             window.loginCb = function() {

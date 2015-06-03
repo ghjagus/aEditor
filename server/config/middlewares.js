@@ -31,7 +31,7 @@ module.exports = function (app) {
             var cgiName = cgi.url;
             var type = cgi.type || 'get';
 
-            if(cgiName === req.path && req.method.toLowerCase() === type.toLowerCase()) {
+            if(req.path.indexOf(cgiName) > -1 && req.method.toLowerCase() === type.toLowerCase()) {
                 useThisMd = false;
             }
         });

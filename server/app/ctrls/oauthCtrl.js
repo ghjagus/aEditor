@@ -16,10 +16,18 @@ module.exports.doLogin = function (req, res) {
         }
     };
 
+    if(! token) {
+        util.unLogin(res);
+    }
+
     // 获取uid
     request(reqOpt, function (err, response, body) {
-        var uid = JSON.parse(body).user.uid;
-        if(err) {
+        var loginRet = JSON.parse(body);
+        var uid;
+
+        loginRet.hasOwnProperty('user') && (uid = loginRet.user.uid);
+
+        if(err || ! uid) {
             util.unLogin(res);
         } else {
             var html = '<script>document.domain="alloyteam.com";top.loginCb({"uid":"'+uid+'"});</script>';
