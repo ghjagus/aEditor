@@ -5,9 +5,45 @@
 
 var fs = require('fs');
 var path = require('path');
+var stream = require('stream');
 var util = require('../../util/util');
 var archiver = require('archiver');
 var workModel = require('../models/workModel');
+var imagemin = require('image-min');
+var fileCompare = require('file-compare');
+
+
+
+function deleteTempControllerDir (uid){
+    var tempCtrl = path.join(util.getCdnDir(), uid, 'temp','ctrl');
+    var ctrl = path.join(util.getCdnDir(), uid,'ctrl');
+    if(fs.existsSync(tempCtrl)) {
+        util.rmdirsSync(tempCtrl);
+    }
+     util.mkdirsSync(tempCtrl);
+
+    if(!fs.existsSync(ctrl)){
+        util.mkdirsSync(ctrl);
+    }
+
+}
+
+function deleteTempWorkDir (uid){
+    var tempWork = path.join(util.getCdnDir(), uid, 'temp','work');
+    var work = path.join(util.getCdnDir(), uid,'work');
+    
+    if(fs.existsSync(tempWork)) {
+        util.rmdirsSync(tempWork);
+    }
+
+    util.mkdirsSync(tempWork);
+   
+    if(!fs.existsSync(work)){
+        util.mkdirsSync(work);
+    }
+
+}
+
 
 
 /**
@@ -18,10 +54,14 @@ var workModel = require('../models/workModel');
 module.exports.upload = function(req, res) {
     var imgBase64Str = req.body.img || '';
     var userID = util.getUid(req);
-    var workID = util.getWorkId(req);
+    var type = util.getType(req);
+
+    var id = type == 1? util.getCtrlId(req) : util.getWorkId(req);
+
     var cndFolder;
     var imgName = req.body.img_name || util.guid();
-    var imgExtName;
+    var imgExtName,
+        imgTempReName;
 
     // 对base64串作检测
     if(! /^data:(.*);base64,/.test(imgBase64Str) && imgBase64Str.length < 100) {
@@ -31,32 +71,93 @@ module.exports.upload = function(req, res) {
         });
     }
 
-    if(workID) {
-        cndFolder = util.getCdnDir()+[userID, workID].join('/');
-    } else {
-        cndFolder = util.getCdnDir()+[userID, 'temp'].join('/');
+    // 存在作品或元件
+    if(id){
+        cndFolder = util.getCdnDir()+[userID,type == 1 ? 'ctrl': 'work',id].join('/');
     }
+    else{
+        cndFolder = util.getCdnDir()+[userID, 'temp', type == 1 ? 'ctrl': 'work'].join('/');
+    }
+    
+
 
     if(! fs.existsSync(cndFolder)) {
         util.mkdirsSync(cndFolder);
     }
 
-    imgExtName = '.'+util.getBase64ExtName(imgBase64Str);
-    imgReName = path.join(cndFolder, imgName + imgExtName);
 
-    // 如果图片已经存在，重命名规则为在后面简单加0
-    while(fs.existsSync(imgReName)) {
-        imgReName = path.join(cndFolder, path.basename(imgReName, imgExtName) + '0'+imgExtName);
+    imgExtName = '.'+util.getBase64ExtName(imgBase64Str);
+
+    imgReName = path.join(cndFolder, imgName + imgExtName);
+    imgTempReName = path.join(cndFolder, 'temp_' + imgName + imgExtName);
+
+    // 如果图片已经存在，返回已存在图片的地址
+    if(fs.existsSync(imgReName)) {
+        //imgReName = path.join(cndFolder, path.basename(imgReName, imgExtName) + '0'+imgExtName);
+        util.json(res, {
+            errType: 0,
+            json: {
+                url: util.uriChange(imgReName)
+            }
+        });
+        return;
     }
 
-    fs.writeFileSync(imgReName, new Buffer(imgBase64Str.replace(/^data:(.*);base64,/, ''), "base64"));
+    var imgData = new Buffer(imgBase64Str.replace(/^data:(.*);base64,/, ''), "base64");
 
-    util.json(res, {
-        errType: 0,
-        json: {
-            url: util.uriChange(imgReName)
+    // 图片压缩
+    var imgStream = fs.createWriteStream(imgTempReName);
+    imgStream.on('finish',function(){
+ 
+        var readImgStream = fs.createReadStream(imgTempReName);
+        var newWriteStream = fs.createWriteStream(imgReName);
+
+        newWriteStream.on('finish',function(){
+            // 删除原文件
+            fs.unlinkSync(imgTempReName);
+
+            util.json(res, {
+                errType: 0,
+                json: {
+                    url: util.uriChange(imgReName)
+                }
+            });
+        });
+
+        if(imgExtName != '.png'){
+            //压缩图片
+            readImgStream.pipe(imagemin({
+                ext:imgExtName
+            }))
+            .pipe(newWriteStream);
         }
+        else{
+            readImgStream.pipe(newWriteStream);
+        }
+
+
+   
+
+
     });
+    imgStream.write(imgData);
+    imgStream.end();
+
+   
+    //var newWriteStream = fs.createWriteStream( path.join(cndFolder, path.basename(imgReName, imgExtName) + '0'+imgExtName));
+
+    // //压缩图片
+    // readImgStream.pipe(imagemin({
+    //     ext:imgExtName
+    // }))
+    // .pipe(newWriteStream);
+
+    //readImgStream.pipe(newWriteStream);
+
+   // newWriteStream.end()
+
+
+
 };
 
 // 作品打包下载
@@ -67,14 +168,14 @@ module.exports.workdownloads = function (req, res) {
         work_id = util.getWorkId(req);
 
     var jsPath, imgPath, archive;
-
+      
     if(user_id) {
         conditions = {
             user_id: {$eq: user_id},
             _id: {$eq: work_id}
         };
 
-        if(! conditions.id) {
+        if(!work_id) {
             // 如果没有work_id，则使用user_id/temp打包
             archive = archiver('zip');
             archive.on('error', function(err) {
@@ -89,7 +190,7 @@ module.exports.workdownloads = function (req, res) {
             res.attachment('aeditor-'+new Date()*1+'.zip');
             archive.pipe(res);
             jsPath = path.join(util.getCdnDir(), 'js', user_id);
-            imgPath = path.join(util.getCdnDir(), user_id, 'temp');
+            imgPath = path.join(util.getCdnDir(), user_id, 'temp','work');
 
             archive.bulk([
                 { expand: true, cwd: 'zip', src: ['index.html'], dest:'/' },
@@ -110,7 +211,7 @@ module.exports.workdownloads = function (req, res) {
                     errCode: 9
                 });
             }
-            var imgFdExist = fs.existsSync(path.join(util.getCdnDir(), user_id, work_id));
+            var imgFdExist = fs.existsSync(path.join(util.getCdnDir(), user_id, 'work',work_id));
 
             if(count === 1 && imgFdExist) {
                 archive = archiver('zip');
@@ -126,8 +227,8 @@ module.exports.workdownloads = function (req, res) {
                 res.attachment('aeditor-'+new Date()*1+'.zip');
                 archive.pipe(res);
                 jsPath = path.join(util.getCdnDir(), 'js', user_id);
-                imgPath = path.join(util.getCdnDir(), user_id, work_id);
-
+                imgPath = path.join(util.getCdnDir(), user_id, 'work',work_id);
+              
                 archive.bulk([
                     { expand: true, cwd: 'zip', src: ['index.html'], dest:'/' },
                     { expand: true, cwd: 'zip/css', src: ['*.css'], dest:'/css/' },
@@ -196,17 +297,30 @@ module.exports.createJsFile = function (req, res, next) {
 };
 
 
+
+
+
 module.exports.deleteTempDir = function (req, res) {
     var uid = util.getUid(req);
-    var temp = path.join(util.getCdnDir(), uid, 'temp');
 
-    if(fs.existsSync(temp)) {
-        util.rmdirsSync(temp);
-    }
+    deleteTempWorkDir(uid);
+    deleteTempControllerDir(uid);
+
     util.json(res, {
         errType: 0,
         json: {
             msg: '清空temp目录成功'
+        }
+    });
+};
+
+module.exports.deleteTempControllerDir = function(req, res){
+    var uid = util.getUid(req);
+    deleteTempControllerDir(uid);
+    util.json(res, {
+        errType: 0,
+        json: {
+            msg: '清空元件temp目录成功'
         }
     });
 };

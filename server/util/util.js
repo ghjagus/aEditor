@@ -113,6 +113,14 @@ module.exports.getWorkId = function (req) {
     return req.body.work_id || req.query.work_id || '';
 };
 
+// 从请求中获取元件ID
+module.exports.getCtrlId = function (req) {
+    return req.body.ctrl_id || req.query.ctrl_id || '';
+};
+// 从请求中获取类型
+module.exports.getType = function (req) {
+    return req.body.type || req.query.type || '';
+};
 // 未登录
 module.exports.unLogin = function (res) {
     return res.json({

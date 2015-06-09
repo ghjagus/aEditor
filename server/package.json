@@ -19,7 +19,9 @@
     "jade": "~1.9.2",
     "mongoose": "^4.0.1",
     "path": "^0.11.14",
-    "request": "^2.55.0"
+    "request": "^2.55.0",
+    "image-min": "~0.3.2",
+    "file-compare": "0.0.2"
   },
   "devDependencies": {}
 }

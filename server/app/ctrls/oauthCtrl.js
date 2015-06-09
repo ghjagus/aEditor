@@ -38,3 +38,16 @@ module.exports.doLogin = function (req, res) {
         }
     });
 };
+
+// 注销
+module.exports.doLogout = function (req, res) {
+
+
+    // 设置cookie过期
+    res.cookie('user_id', '', { expires: new Date(Date.now() - 10000000), httpOnly: true });
+    // 返回注销成功
+    return res.json({
+        retcode: 0,
+        msg:'注销成功'
+    });
+};

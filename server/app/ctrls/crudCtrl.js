@@ -27,7 +27,10 @@ module.exports.upsert = function (req, res, next) {
         modelDataKeys = ['user_id', 'name', 'is_delete'],
         tip,$model, modelData,conditions,
         // 默认为0（作品），1（元件）
-        type = +postData.type || 0, uid;
+        type = +postData.type || 0, uid,
+        typeKey = type == 1 ? 'ctrl' : 'work';
+
+   
 
     switch (type) {
         case 0:
@@ -61,7 +64,9 @@ module.exports.upsert = function (req, res, next) {
             var pSource, pTarget, $work_id, $work_data;
             var rfn = function (match, g1, g2) {
                 match = match.split(g1);
-                return match.join($work_id);
+                match.splice(1,0,typeKey + '/' + $work_id);
+                debugger;
+                return match.join('');
             };
 
             if (err) {
@@ -72,24 +77,35 @@ module.exports.upsert = function (req, res, next) {
                 });
             }
 
-            pSource = path.join(util.getCdnDir(), uid, 'temp');
+            pSource = path.join(util.getCdnDir(), uid, 'temp', type == 1 ? 'ctrl' : 'work');
             $work_id = workData.id;
-            $work_data = util.getObjKeysMap(workData._doc, ['user_id', 'name', 'is_delete', 'work_data']);
-            pTarget = path.join(util.getCdnDir(), uid, $work_id);
+            $work_data = util.getObjKeysMap(workData._doc, ['user_id', 'name', 'is_delete', typeKey + '_data']);
+            pTarget = path.join(util.getCdnDir(), uid, typeKey, $work_id);
 
             // 重命名temp文件夹为work_id,达到复制作用
             fs.rename(pSource, pTarget,function(err){
                 if(err){
+                    console.log(err);
                     //TODO 返回增加失败，并删除这条记录
                     res.json({
                         msg:'增加失败，原因，重命名图片文件夹失败'+pTarget
-                    })
+                    });
+   
                 } else {
-                    // 由于重命名了图片保存目录，所以要修改图片路径
-                    $work_data.work_data = $work_data.work_data
-                        .replace(/"imgUrl"\:".*?\b(temp)\b.*?"/gm, rfn)
-                        .replace(/"spriteImgUrl"\:".*?\b(temp)\b.*?"/gm, rfn);
 
+                    //重新创建temp目录
+                    util.mkdirsSync(pSource);
+
+
+                    var dataKey = type == 1 ? 'ctrl_data' : 'work_data';
+
+                    // 由于重命名了图片保存目录，所以要修改图片路径
+                    $work_data[dataKey] = $work_data[dataKey]
+                        .replace(/"imgUrl"\:".*?\b(temp\/(ctrl|work))\b.*?"/gm, rfn)
+                        .replace(/"spriteImgUrl"\:".*?\b(temp\/(ctrl|work))\b.*?"/gm, rfn)
+                        .replace(/url\(.*?\b(temp\/(ctrl|work))\b.*?\)/gm, rfn);
+
+                    debugger;
 
                     $model.findByIdAndUpdate($work_id, $work_data, function (err, data) {
                         //TODO 返回增加失败，并删除这条记录
@@ -103,6 +119,7 @@ module.exports.upsert = function (req, res, next) {
                             jsonMsg: '更新'+tip+'成功'
                         });
                     });
+
                 }
             });
             return;
@@ -136,7 +153,10 @@ module.exports.upsert = function (req, res, next) {
 module.exports.delete = function (req, res, next) {
     var postData = req.body,
         type = +postData.type || 0,
+        userID = util.getUid(req),
         $model, id;
+
+
 
     if(type === 0) {
         id = postData.work_id;
@@ -177,6 +197,10 @@ module.exports.delete = function (req, res, next) {
                 });
             }
 
+            var workPath = path.join(util.getCdnDir(), userID, type == 1 ? 'ctrl' : 'work',id);
+            //同时删除图片文件夹
+            util.rmdirsSync(workPath);
+
             util.json(res, {
                 errType: 0,
                 json: {
@@ -200,7 +224,11 @@ module.exports.query = function (req, res, next) {
     var userId= util.getUid(req);
     var page = conditions.page;
     var size = conditions.size;
-    var _skip = (page - 1) * size;
+
+    console.log(page + ':' + size);
+
+    var _skip = (page) * size;
+
     var total = 0;
 
     var _contions = {

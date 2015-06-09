@@ -35,6 +35,10 @@
 	var showClassName;
 	//已加载资源的数量
 	var loadedCount = 0;
+	//全局精灵的包装元素
+	var globalSpriteWrap;
+
+
 
 
 	var T;
@@ -59,7 +63,7 @@
 
 	function nextPageHandler(){
 		var animationObject = MainPage.animationObjectsList[currentIndex];
-		if(animationObject.slideJump && currentIndex < stageList.length - 1){
+		if(/*animationObject.slideJump &&*/ currentIndex < stageList.length - 1){
 			MainPage.next();
 		}
 	};
@@ -67,7 +71,7 @@
 	function prePageHandler(){
 
 		var animationObject = MainPage.animationObjectsList[currentIndex];
-		if(animationObject.slideJump && currentIndex > 0){
+		if(/*animationObject.slideJump &&*/ animationObject.preJump && currentIndex > 0){
 			MainPage.pre();
 		}
 	};
@@ -89,18 +93,18 @@
     		transformString = filterAndroid23Transform(transformString);
     	}
     
-        var str = transformString.replace(/translateX\((.*?)\)/g,function(str,value){
-            var value = Number(value.replace('px',''));
-            return 'translateX(' + ((value / 320) * winWidth) + 'px)';
-        });
+        // var str = transformString.replace(/translateX\((.*?)\)/g,function(str,value){
+        //     var value = Number(value.replace('px',''));
+        //     return 'translateX(' + ((value / 320) * winWidth) + 'px)';
+        // });
         // .replace(/translateY\((.*?)\)/g,function(str,value){
         //     var value = Number(value.replace('px',''));
         //     return 'translateY(' + ((value / 480) * winHeight) + 'px)';
         // });
 
        
-
-        return str;
+		return transformString;
+        //return str;
         
     };
 
@@ -154,12 +158,20 @@
 			var self = this;
 			stageElement.on('webkitAnimationEnd',function(){
 				var index = stageElement.data('index');
-				
+			
 				//该页里精灵的动画
 				if(index == currentIndex){
 					//页面进入完成的事件通知
 					$(window).trigger('pageEnterFinish',{
-						pageIndex:index
+						pageIndex:index,
+						from:'main_show',
+						isGlobalEvent:1
+					});
+
+					//页面进入完成的事件通知
+					$(window).trigger('pageEnterFinish' + index,{
+						isGlobalEvent:1,
+						from:'main_show'
 					});
 
 					self.run();
@@ -168,8 +180,14 @@
 				else{
 					//页面离开完成的事件通知
 					$(window).trigger('pageLeaveFinish',{
-						pageIndex:index
-					});					
+						pageIndex:index,
+						isGlobalEvent:1
+					});	
+
+					//页面进入完成的事件通知
+					$(window).trigger('pageLeaveFinish' + index,{
+						isGlobalEvent:1
+					});				
 				}
 			});
 		},
@@ -217,6 +235,7 @@
 			$.each(animationObjectsList,function(i,ao){
 				var stageElement = self.addStage();
 
+
 				//第一页增加current类
 				if(i == 0){
 					stageElement.addClass('pt-page-current');
@@ -255,6 +274,8 @@
 
 				//动画结束，去掉transition动画属性,运行下一个舞台的动画
 				self._bindStageAnimationEnd(stageElement);
+
+
 
 				self.createSingle(ao,stageElement);
 
@@ -297,6 +318,10 @@
 			this.resourceLoadedCallback = callback;
 		},
 		create:function(animationObject){
+
+			if(!animationObject){
+				return;
+			}
 
 			var self = this;
 			//需要加载的图片列表
@@ -403,17 +428,21 @@
 				//事件对应精灵元素
 				var spriteElement = spriteElementMap[et.id];
 				var controllerSingle = controllerMap[et.id];
-
+				// //只有事件帧展示栏的元素
+				// if(!spriteElement){
+				// 	spriteElement = self.addNewElement(t,stageElement,isFromEdit);
+				// }
+	
 				//用新元素赋值
 				et.elem = spriteElement;
 
 				var eventHandler = function(){
 					var et = arguments.callee.et;
-					var e = arguments[1];
+					var e = arguments[1] || {};
 					var stageElement = et.elem.closest('.ms-stage');
 					
-					//区分来源，避免编辑区和播放区动画由于同时监听同一个事件，同时播放
-					if(e && e.from == 'main_show' && e.stageElementIndex == stageElement.data('index')){
+					//区分来源，避免编辑区和播放区动画由于同时监听同一个事件，或者是全局事件,同时播放
+					if(e && e.from == 'main_show' && (e.stageElementIndex == stageElement.data('index') || e.isGlobalEvent) ){
 					
 						//绑定动画结束行为
 						self._bindEndAction(et,'main_show');
@@ -485,6 +514,8 @@
 			var stageElement = stageList[currentIndex];
 			//要跳到的舞台
 			var targetStargeElememt = stageList[index];
+			//要跳到的舞台的obj
+			var targetAnimationObject = this.animationObjectsList[index];
 			//要离开的舞台obj
 			var animationObject = this.animationObjectsList[currentIndex];
 			//触发翻页行为事件
@@ -501,15 +532,31 @@
 
 			//触发离开某页的事件
 			$(window).trigger('pageLeave',{
-				pageIndex:currentIndex
+				pageIndex:currentIndex,
+				isGlobalEvent:1,
+				from:'main_show'
 			});
 
+			//触发离开某页的事件
+			$(window).trigger('pageLeave' + currentIndex,{
+				isGlobalEvent:1,
+				from:'main_show'
+			});
 
 
 			//触发进入某页的事件
 			$(window).trigger('pageEnter',{
-				pageIndex:index
+				pageIndex:index,
+				isGlobalEvent:1,
+				from:'main_show'
 			});
+
+			//触发进入某页的事件
+			$(window).trigger('pageEnter' + index,{
+				isGlobalEvent:1,
+				from:'main_show'
+			});
+
 
 			if(typeof currentIndex != 'undefined'){
 
@@ -523,7 +570,9 @@
 			}
 
 			//播放翻页动画前删除要跳到的舞台上的所有精灵原有动画属性
-			this._resetSpritesAnimationByStage(targetStargeElememt);
+			if(targetAnimationObject.played && targetAnimationObject.replay){
+				this._resetSpritesAnimationByStage(targetStargeElememt);
+			}
 
 			currentIndex = index;
 		},
@@ -553,8 +602,10 @@
 			//移除禁止动画属性
 			this._resumeSpritesAnimationByStage(stageList[currentIndex]);
 
-			if(animationObject){
+			if(animationObject && (!animationObject.played || animationObject.replay)){
 				this.runSingle(animationObject);
+				//标记已经播放过
+				animationObject.played = true;
 				//播放元件动画
 				$.each(animationObject.transitionArr,function(i,transitionObj){
 					//有元件并且允许同时播放元件动画
@@ -567,6 +618,7 @@
 			$(window).trigger('afterRun');
 
 		},
+
 		//创建一个新的元素
 		addNewElement:function(transitionObj,stageElement,isFromEdit){
 	
@@ -574,12 +626,17 @@
 			var controllerSingle;
 			var controllerWrap;
 			var controllerRenderData = transitionObj.controllerRenderData;
+			var stageContainerElement = $(stageElement.find('.ms-stage-container'));
 			//元件
 			if(controllerRenderData){
-
 				controllerWrap = $('<div></div>',{
 					class:'ms-controller-wrap'
 				});
+				var container = $('<div></div>',{
+					class:'ms-stage-container'
+				});
+
+				controllerWrap.append(container);
 
 				controllerSingle = self.createSingle(controllerRenderData,controllerWrap);
 			}
@@ -587,7 +644,7 @@
 			var elementId = (isFromEdit ? 'controller_sprite_' : 'ms_') + getRandomId()/*transitionObj.id*/ ;
 			var newElement = $('<div></div>',{
 				id:elementId,
-				class:isFromEdit ? 'controller-sprite' : 'ms-sprite'
+				class:isFromEdit ? 'controller-sprite' : 'ms-sprite' + ' ' + transitionObj.className
 			});
 
 			//文本内容
@@ -600,7 +657,7 @@
 				var classNameTag = $('<div></div>',{
 					class:'ms-sprite-class-name-tag'
 				});
-				classNameTag.text(transitionObj.className);
+				classNameTag.text(transitionObj.name);
 				newElement.append(classNameTag);
 			}
 
@@ -621,37 +678,64 @@
 			// }
 
 			//newElement.css(cssObj);
+			if(transitionObj.keyframes && !$.isEmptyObject(transitionObj.keyframes)){
 
-			//以第一个关键帧的css属性设置新元素的初始属性
-			var firstCssProperty = $.extend(cssObj,transitionObj.keyframes['0%']);
-			delete firstCssProperty['-webkit-animation-timing-function'];
+				//以第一个关键帧的css属性设置新元素的初始属性
+				var firstCssProperty = $.extend(cssObj,transitionObj.keyframes['0%']);
+				delete firstCssProperty['-webkit-animation-timing-function'];
 
 
 
-			//mobile环境下得变形字符串处理
-			if(isMobile && !newElement.data('xConvert')){
-				firstCssProperty['-webkit-transform'] = processMobileTransform(firstCssProperty['-webkit-transform']);
-				//标识该元素已经转换过
-				newElement.data('xConvert',1);
+				//mobile环境下得变形字符串处理
+				if(isMobile && !newElement.data('xConvert')){
+					firstCssProperty['-webkit-transform'] = processMobileTransform(firstCssProperty['-webkit-transform']);
+					//标识该元素已经转换过
+					newElement.data('xConvert',1);
+				}
+
+
+				firstCssProperty.width = Number(firstCssProperty.width);
+				firstCssProperty.height = Number(firstCssProperty.height);
+
+				newElement.css(firstCssProperty);
+
+
+
+				//保存初始样式，用于翻页时恢复
+				if(!firstCssPropertyMap){
+					firstCssPropertyMap = {};
+				}
+				firstCssPropertyMap[elementId] = firstCssProperty;
 			}
-
-
-			newElement.css(firstCssProperty);
-
-			//保存初始样式，用于翻页时恢复
-			if(!firstCssPropertyMap){
-				firstCssPropertyMap = {};
+			//只有精灵没有帧展示栏
+			else{
+				newElement.css($.extend({
+					'z-index':transitionObj.zIndex
+				},transitionObj.spriteCssProperties));
 			}
-			firstCssPropertyMap[elementId] = firstCssProperty;
 
 
 			if(controllerWrap){
 				controllerWrap.appendTo(newElement);
 				transitionObj.controllerSingle = controllerSingle;
 			}
+			//全局精灵
+			if(transitionObj.isGlobal){
+				if(!globalSpriteWrap){
+					globalSpriteWrap = $('<div></div>',{
+						class:'ms-global-sprite-wrap'
+					});
+					globalSpriteWrap.appendTo(this.showArea);
+				}
+				
+				newElement.appendTo(globalSpriteWrap);
+				
+			}
+			else{
+				//新元素添加到舞台
+				newElement.appendTo(stageContainerElement);				
+			}
 
-			//新元素添加到舞台
-			newElement.appendTo(stageElement);
 
 
 
@@ -662,7 +746,14 @@
 			var stageElement = $('<div></div>',{
 				class:'ms-stage'
 			});
+			//舞台容器
+			var stageContainerElement = $('<div></div',{
+				class:'ms-stage-container'
+			});
+
+			stageElement.append(stageContainerElement);
 			stageElement.appendTo(this.showArea);
+
 			return stageElement;
 		},
 		removeAllAnimationStyle:function(){
@@ -673,6 +764,7 @@
 			this.showArea.html('');
 		},
 		remove:function(){
+			globalSpriteWrap = null;
 			this.showArea.html('');
 			//删除所有舞台上的精灵的动画
 			T && T.stop();

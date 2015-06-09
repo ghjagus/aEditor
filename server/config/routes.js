@@ -33,7 +33,15 @@ module.exports = function (app) {
     // 登录用接口
     app.get('/login', oauth.doLogin);
 
+    // 注销用接口
+    app.get('/logout', oauth.doLogout);
+    
     // 清空uid中的temp目录
-    app.get('/deltemp', files.deleteTempDir)
+    app.get('/deltemp', files.deleteTempDir);
+
+
+    // 清空uid中元件的temp目录
+    app.get('/delctrltemp', files.deleteTempControllerDir);
+    
 
 };

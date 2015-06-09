@@ -89,17 +89,17 @@
                     newSingleFrameObj[n] += 'px';
                 }
                 //外部手机端页面,translateX替换成按屏幕比例的x值(如果之后这里涉及元件，元件要特殊处理一下，不能相对于手机屏幕设置宽度)
-                if(n == '-webkit-transform' && isMobile){
+                // if(n == '-webkit-transform' && isMobile){
 
-                    var winWidth = window.innerWidth;
+                //     var winWidth = window.innerWidth;
 
-                    newSingleFrameObj[n] = newSingleFrameObj[n].replace(/translateX\((.*?)\)/g,function(str,value){
-                        var value = Number(value.replace('px',''));
+                //     newSingleFrameObj[n] = newSingleFrameObj[n].replace(/translateX\((.*?)\)/g,function(str,value){
+                //         var value = Number(value.replace('px',''));
                      
-                        return 'translateX(' + ((value / 320) * winWidth) + 'px)';
-                    });
+                //         return 'translateX(' + ((value / 320) * winWidth) + 'px)';
+                //     });
                   
-                }
+                // }
 
                 keyFramesStrArr.push(n + ':' + newSingleFrameObj[n] + ';');
             }
