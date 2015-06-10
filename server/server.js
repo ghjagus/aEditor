@@ -3,6 +3,10 @@ var app = express();
 var path = require('path');
 var port = process.env.PORT || 3000;
 var util = require('./util/util');
+var logger = require("./config/logger");
+
+// 日志
+app.use(require('morgan')({ "stream": logger.stream }));
 
 // 配置
 require('./config/projectConf')(app);
@@ -28,5 +32,5 @@ require('./config/routes')(app);
 require('./config/exceptions')(app);
 
 app.listen(port, function () {
-    console.log('Express started on port '+port+'...');
+    logger.info('Express started on port '+port+'...');
 });
