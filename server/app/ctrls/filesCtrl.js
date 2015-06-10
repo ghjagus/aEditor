@@ -12,6 +12,13 @@ var workModel = require('../models/workModel');
 var imagemin = require('image-min');
 var fileCompare = require('file-compare');
 
+var execFile = require('child_process').execFile;
+var optipng = require('optipng-bin');
+var optimage = require('optimage');
+
+
+var Imagemin = require('imagemin');
+
 
 
 function deleteTempControllerDir (uid){
@@ -106,34 +113,65 @@ module.exports.upload = function(req, res) {
     var imgData = new Buffer(imgBase64Str.replace(/^data:(.*);base64,/, ''), "base64");
 
     // 图片压缩
-    var imgStream = fs.createWriteStream(imgTempReName);
+    var imgStream = fs.createWriteStream(imgReName);
     imgStream.on('finish',function(){
  
-        var readImgStream = fs.createReadStream(imgTempReName);
-        var newWriteStream = fs.createWriteStream(imgReName);
-
-        newWriteStream.on('finish',function(){
-            // 删除原文件
-            fs.unlinkSync(imgTempReName);
-
-            util.json(res, {
-                errType: 0,
-                json: {
-                    url: util.uriChange(imgReName)
-                }
-            });
+        new Imagemin()
+        .src(imgReName)
+        .dest(cndFolder)
+        .run(function(err){
+            if(err){
+                // 上传失败
+               util.json(res, {
+                    errType: 1
+                });         
+            }
+            else{
+                util.json(res, {
+                    errType: 0,
+                    json: {
+                        url: util.uriChange(imgReName)
+                    }
+                });                
+            }
         });
 
-        if(imgExtName != '.png'){
-            //压缩图片
-            readImgStream.pipe(imagemin({
-                ext:imgExtName
-            }))
-            .pipe(newWriteStream);
-        }
-        else{
-            readImgStream.pipe(newWriteStream);
-        }
+
+        // if(imgExtName != '.png'){
+        //     var readImgStream = fs.createReadStream(imgTempReName);
+        //     var newWriteStream = fs.createWriteStream(imgReName);
+
+        //     newWriteStream.on('finish',function(){
+        //         // 删除原文件
+        //         fs.unlinkSync(imgTempReName);
+
+        //         util.json(res, {
+        //             errType: 0,
+        //             json: {
+        //                 url: util.uriChange(imgReName)
+        //             }
+        //         });
+        //     });            
+        //     //压缩图片
+        //     readImgStream.pipe(imagemin({
+        //         ext:imgExtName
+        //     }))
+        //     .pipe(newWriteStream);
+        // }
+        // else{
+        //     console.log('compress png');
+
+
+        //     //  readImgStream.pipe(imageminOptipng({optimizationLevel: 3})())
+        //    // .pipe(newWriteStream);
+        //     //readImgStream.pipe(newWriteStream);
+
+        //     // execFile(optipng, ['-out', imgReName, util.getCdnDir()+[userID,type == 1 ? 'ctrl': 'work',id].join('\\') + 'logo_M.png'], function (err) {
+        //     //     console.log('Image minified!');
+        //     // });
+
+
+        // }
 
 
    
@@ -143,22 +181,13 @@ module.exports.upload = function(req, res) {
     imgStream.write(imgData);
     imgStream.end();
 
-   
-    //var newWriteStream = fs.createWriteStream( path.join(cndFolder, path.basename(imgReName, imgExtName) + '0'+imgExtName));
-
-    // //压缩图片
-    // readImgStream.pipe(imagemin({
-    //     ext:imgExtName
-    // }))
-    // .pipe(newWriteStream);
-
-    //readImgStream.pipe(newWriteStream);
-
-   // newWriteStream.end()
 
 
 
 };
+
+
+
 
 // 作品打包下载
 module.exports.workdownloads = function (req, res) {
