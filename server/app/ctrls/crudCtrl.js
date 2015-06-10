@@ -9,6 +9,8 @@ var util = require('../../util/util');
 var path = require('path');
 var fs = require('fs');
 
+var baseUrl = 'http://aeditor.alloyteam.com:3000/';
+
 var getJsonData = function getJsonData(type, data) {
     return type === 0 ? {
         work_id: data._id
@@ -65,7 +67,6 @@ module.exports.upsert = function (req, res, next) {
             var rfn = function (match, g1, g2) {
                 match = match.split(g1);
                 match.splice(1,0,typeKey + '/' + $work_id);
-                debugger;
                 return match.join('');
             };
 
@@ -105,7 +106,6 @@ module.exports.upsert = function (req, res, next) {
                         .replace(/"spriteImgUrl"\:".*?\b(temp\/(ctrl|work))\b.*?"/gm, rfn)
                         .replace(/url\(.*?\b(temp\/(ctrl|work))\b.*?\)/gm, rfn);
 
-                    debugger;
 
                     $model.findByIdAndUpdate($work_id, $work_data, function (err, data) {
                         //TODO 返回增加失败，并删除这条记录
@@ -287,3 +287,84 @@ module.exports.query = function (req, res, next) {
         });
 };
 
+
+// 获取某用户的所有图片(根据文件夹划分)
+module.exports.getAllImgs  = function (req, res) {
+
+    var type = +req.query.type || 0;
+    var $model = getModel(type);
+    var selectKey = 'name '+ (type === 0 ? 'work_data' :'ctrl_data');
+    var userId= util.getUid(req);
+    // 当前作品id
+    var work_id = req.query.work_id;
+    var fileObj = {};
+    var i = 0;
+
+    var _contions = {
+        user_id : {$eq: userId},
+        is_delete: {$eq:'0'}
+    };
+
+
+    $model.find(_contions)
+        .select(selectKey)
+        .sort({'update_time': 1})
+        .exec(function(err, results) {
+            if (err) {
+                return util.json(res, {
+                    errType: 2,
+                    errCode: 1
+                });
+            }
+
+            
+            // 获取每个作品图片文件夹
+            results.forEach(function(result){
+
+                var id = result.id;
+                var imgsDir = path.join(util.getCdnDir(), userId, type == 1 ? 'ctrl' : 'work',id);
+
+
+                // 读取作品文件夹内的图片文件
+                fs.readdir(imgsDir, function(err, files){
+
+                     i++;
+
+                    fileObj[result.name] = [];
+
+                    if(!err && !result.is_delete){
+                       
+                        // 该作品内的图片
+                        files.forEach(function(imgFile){
+                            var url = path.join(userId, type == 1 ? 'ctrl' : 'work',id) + '\\' + imgFile;
+                            url = url.replace(/\\/g,'/');
+
+                            fileObj[result.name].push(baseUrl + url);
+                        });
+                    }
+                    else{
+                       
+                    }
+
+                    // 读取完毕
+                    if(i == results.length){
+                        // 返回图片列表
+                        util.json(res, {
+                            errType: 0,
+                            json:{
+                                img_files:fileObj
+                            }
+                        });
+                    }
+
+
+                });
+
+
+            });
+
+
+
+
+        });
+}; 
