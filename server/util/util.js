@@ -11,6 +11,10 @@ module.exports.getCdnDir = function () {
     return config.cdn;
 };
 
+module.exports.getLoggerDir = function () {
+    return config.loggerDir;
+};
+
 module.exports.getDbUri = function () {
     return config.db;
 };
