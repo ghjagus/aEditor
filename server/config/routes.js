@@ -42,6 +42,9 @@ module.exports = function (app) {
     // 获取图片目录
     app.get('/getimgs',ctrls.getAllImgs);
 
+    // 删除一张图片
+    app.post('/delimg',files.deleteUserImage);
+
 
     // 清空uid中元件的temp目录
     app.get('/delctrltemp', files.deleteTempControllerDir);

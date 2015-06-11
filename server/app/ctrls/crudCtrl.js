@@ -23,6 +23,10 @@ var getModel = function (type) {
     return Model[type];
 };
 
+
+
+
+
 // 创建与修改
 module.exports.upsert = function (req, res, next) {
     var postData = req.body,
@@ -161,7 +165,7 @@ module.exports.delete = function (req, res, next) {
     if(type === 0) {
         id = postData.work_id;
     } else if (type === 1) {
-        id = postData.ctrl_id
+        id = postData.ctrl_id;
     }
 
     if(id == null) {
@@ -184,7 +188,7 @@ module.exports.delete = function (req, res, next) {
 
         if(count == 0) {
             return util.json(res, {
-                errType: 1,
+                errType: 2,
                 errCode: 8
             });
         }
@@ -288,83 +292,168 @@ module.exports.query = function (req, res, next) {
 };
 
 
+function getImageResults(userId,results,type,fileObj,callback){
+
+     var i = 0;   
+
+
+
+    // 获取每个作品图片文件夹
+    results.forEach(function(result){
+
+        var id = result.id;
+        var imgsDir;
+        var name;
+
+        if(type == 0){
+            imgsDir = path.join(userId, 'work', id);
+            name = 'work';
+        }
+        else if(type == 1){
+            imgsDir = path.join(userId, 'ctrl', id);
+            name = 'ctrl';
+        }
+        else if(type == 2){
+            imgsDir = path.join(userId, 'temp/work');
+            name = 'tempwork';
+        }
+        else if(type == 3){
+            imgsDir = path.join(userId, 'temp/ctrl');
+            name = 'tempctrl';
+        }
+
+
+
+        // 读取作品文件夹内的图片文件
+        fs.readdir(util.getCdnDir() + '/' + imgsDir, function(err, files){
+
+             i++;
+
+            fileObj[name][result.id] = {
+                name:result.name,
+                imgList:[]
+            };
+
+            if(!err && !result.is_delete){
+               
+                // 该作品内的图片
+                files.forEach(function(imgFile){
+                    var url = imgsDir + '\\' + imgFile;
+                    url = url.replace(/\\/g,'/');
+
+                    fileObj[name][result.id].imgList.push(baseUrl + url);
+                });
+            }
+            else{
+               
+            }
+
+            // 读取完毕
+            if(i == results.length){
+
+                callback && callback();
+
+            }
+
+
+        });
+    });
+}
+
+
 // 获取某用户的所有图片(根据文件夹划分)
 module.exports.getAllImgs  = function (req, res) {
 
-    var type = +req.query.type || 0;
-    var $model = getModel(type);
-    var selectKey = 'name '+ (type === 0 ? 'work_data' :'ctrl_data');
-    var userId= util.getUid(req);
+    var $work_model = getModel(0);
+    var $ctrl_model = getModel(1);
+
+    var userId = util.getUid(req);
     // 当前作品id
     var work_id = req.query.work_id;
-    var fileObj = {};
-    var i = 0;
+    // 图片文件分类字典
+    var fileObj = {
+        'tempwork':{},
+        'tempctrl':{},
+        'work':{},
+        'ctrl':{}
+
+    };
+    var finishCount = 0;
+    var availableFolderSize = 0;
+
+    var tempWorkDir = '';
+    var tempCtrDir = '';
+
+    var callback = function(){
+  
+        finishCount ++;
+        // 完成
+        if(finishCount == 5){
+
+            // 返回图片列表
+            util.json(res, {
+                errType: 0,
+                json:{
+                    img_files:fileObj,
+                    available_folder_size:availableFolderSize
+                }
+            });
+        }
+    };
+   
 
     var _contions = {
         user_id : {$eq: userId},
         is_delete: {$eq:'0'}
     };
 
-
-    $model.find(_contions)
-        .select(selectKey)
+    // 获取作品图片
+    $work_model.find(_contions)
+        .select('name work_data')
         .sort({'update_time': 1})
         .exec(function(err, results) {
             if (err) {
                 return util.json(res, {
                     errType: 2,
-                    errCode: 1
+                    errCode: 5
+                });
+            }
+            getImageResults(userId,results,0,fileObj,callback);
+        });
+
+    // 获取元件图片
+    $ctrl_model.find(_contions)
+        .select('name ctrl_data')
+        .sort({'update_time': 1})
+        .exec(function(err, results) {
+            if (err) {
+                return util.json(res, {
+                    errType: 2,
+                    errCode: 5
                 });
             }
 
-            
-            // 获取每个作品图片文件夹
-            results.forEach(function(result){
+            getImageResults(userId,results,1,fileObj,callback);
 
-                var id = result.id;
-                var imgsDir = path.join(util.getCdnDir(), userId, type == 1 ? 'ctrl' : 'work',id);
-
-
-                // 读取作品文件夹内的图片文件
-                fs.readdir(imgsDir, function(err, files){
-
-                     i++;
-
-                    fileObj[result.name] = [];
-
-                    if(!err && !result.is_delete){
-                       
-                        // 该作品内的图片
-                        files.forEach(function(imgFile){
-                            var url = path.join(userId, type == 1 ? 'ctrl' : 'work',id) + '\\' + imgFile;
-                            url = url.replace(/\\/g,'/');
-
-                            fileObj[result.name].push(baseUrl + url);
-                        });
-                    }
-                    else{
-                       
-                    }
-
-                    // 读取完毕
-                    if(i == results.length){
-                        // 返回图片列表
-                        util.json(res, {
-                            errType: 0,
-                            json:{
-                                img_files:fileObj
-                            }
-                        });
-                    }
-
-
-                });
-
-
-            });
-
-
-
-
+        
         });
+
+    // 获取临时作品目录图片
+    getImageResults(userId,[{
+        id:'tempwork',
+        name:'当前作品'
+    }],2,fileObj,callback);
+
+    // 获取临时元件目录图片
+    getImageResults(userId,[{
+        id:'tempctrl',
+        name:'当前元件'
+    }],3,fileObj,callback);
+
+    // 获取用户可用存储空间
+    util.getUserAvailableImgsSize(userId, function(size){
+        availableFolderSize = size;
+        callback();
+    });
+
 }; 

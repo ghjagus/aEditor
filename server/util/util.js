@@ -3,16 +3,17 @@
  */
 var fs = require('fs'),
     path = require('path'),
-    config = require('../config/env/development');
+    config = require('../config/env/development'),
+    logger = require('../config/logger'),
+    getSize = require('get-folder-size');
+
 
 var errorMap = JSON.parse(fs.readFileSync('./config/env/'+config.err, 'utf-8'));
+// 用户可用图片存储空间(MB)
+var USER_AVAILABLE_SIZE = 10;
 
 module.exports.getCdnDir = function () {
     return config.cdn;
-};
-
-module.exports.getLoggerDir = function () {
-    return config.loggerDir;
 };
 
 module.exports.getDbUri = function () {
@@ -75,6 +76,23 @@ module.exports.getBase64ExtName = function (base64Str) {
     return /data\:image\/(\w+)\;/.exec(base64Str)[1];
 };
 
+// 获取目录大小
+module.exports.getUserAvailableImgsSize = function(user_id,callback){
+    var dir = path.join(this.getCdnDir(), user_id);
+
+    getSize(dir,function(err, size){
+        if(err){
+            callback && callback(0);
+        }
+        else{
+            var val = Math.max(0,USER_AVAILABLE_SIZE - (size / 1024 / 1024)).toFixed(2);
+            callback && callback(val);
+        }
+
+
+    });
+};
+
 module.exports.json = function (res, data) {
     var ret;
     if(data.errType === 0) {
@@ -87,12 +105,14 @@ module.exports.json = function (res, data) {
         if(data.jsonMsg) {
             ret.result.msg = data.jsonMsg
         }
+        logger.info(ret);
     } else if(data.errType === 1) {
         // 逻辑错误返回
         ret  ={
             retcode: data.errCode,
             msg: errorMap.retcode[data.errCode]
         }
+        logger.error(ret);
     } else if(data.errType === 2) {
         // 操作数据库出错
         ret = {
@@ -102,6 +122,7 @@ module.exports.json = function (res, data) {
                 msg: errorMap.errno[data.errCode]
             }
         }
+        logger.error(ret);
     }
 
     res.json(ret);
@@ -116,6 +137,11 @@ module.exports.getUid = function (req) {
 module.exports.getWorkId = function (req) {
     return req.body.work_id || req.query.work_id || '';
 };
+// 获取文件名
+module.exports.getFileName = function(req){
+    return req.body.file_name || req.query.file_name || '';
+};
+
 
 // 从请求中获取元件ID
 module.exports.getCtrlId = function (req) {

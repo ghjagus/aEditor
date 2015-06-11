@@ -17,6 +17,7 @@ var optipng = require('optipng-bin');
 var optimage = require('optimage');
 
 
+
 var Imagemin = require('imagemin');
 
 
@@ -50,6 +51,9 @@ function deleteTempWorkDir (uid){
     }
 
 }
+
+
+
 
 
 
@@ -112,80 +116,102 @@ module.exports.upload = function(req, res) {
 
     var imgData = new Buffer(imgBase64Str.replace(/^data:(.*);base64,/, ''), "base64");
 
-    // 图片压缩
-    var imgStream = fs.createWriteStream(imgReName);
-    imgStream.on('finish',function(){
- 
-        new Imagemin()
-        .src(imgReName)
-        .dest(cndFolder)
-        .run(function(err){
-            if(err){
-                // 上传失败
-               util.json(res, {
-                    errType: 1
-                });         
-            }
-            else{
-                util.json(res, {
-                    errType: 0,
-                    json: {
-                        url: util.uriChange(imgReName)
+    util.getUserAvailableImgsSize(userID,function(size){
+        // 超过最大存储空间限制
+        if(imgData.length / 1024 / 1024 > size){
+            util.json(res, {
+                errType: 1,
+                errCode:11
+            }); 
+        }
+        else{
+            // 图片压缩
+            var imgStream = fs.createWriteStream(imgReName);
+            imgStream.on('finish',function(){
+
+         
+                new Imagemin()
+                .src(imgReName)
+                .dest(cndFolder)
+                .run(function(err){
+                    if(err){
+                        // 压缩失败
+                       util.json(res, {
+                            errType: 1,
+                            errCode: 8
+                        });         
                     }
-                });                
-            }
-        });
+                    else{
+                        util.json(res, {
+                            errType: 0,
+                            json: {
+                                url: util.uriChange(imgReName)
+                            }
+                        });                
+                    }
+                });
 
-
-        // if(imgExtName != '.png'){
-        //     var readImgStream = fs.createReadStream(imgTempReName);
-        //     var newWriteStream = fs.createWriteStream(imgReName);
-
-        //     newWriteStream.on('finish',function(){
-        //         // 删除原文件
-        //         fs.unlinkSync(imgTempReName);
-
-        //         util.json(res, {
-        //             errType: 0,
-        //             json: {
-        //                 url: util.uriChange(imgReName)
-        //             }
-        //         });
-        //     });            
-        //     //压缩图片
-        //     readImgStream.pipe(imagemin({
-        //         ext:imgExtName
-        //     }))
-        //     .pipe(newWriteStream);
-        // }
-        // else{
-        //     console.log('compress png');
-
-
-        //     //  readImgStream.pipe(imageminOptipng({optimizationLevel: 3})())
-        //    // .pipe(newWriteStream);
-        //     //readImgStream.pipe(newWriteStream);
-
-        //     // execFile(optipng, ['-out', imgReName, util.getCdnDir()+[userID,type == 1 ? 'ctrl': 'work',id].join('\\') + 'logo_M.png'], function (err) {
-        //     //     console.log('Image minified!');
-        //     // });
-
-
-        // }
-
-
-   
-
-
+            });
+            imgStream.write(imgData);
+            imgStream.end();            
+        }
     });
-    imgStream.write(imgData);
-    imgStream.end();
+
+
 
 
 
 
 };
 
+// 删除一张服务端图片
+module.exports.deleteUserImage = function(req, res){
+    var user_id = util.getUid(req);
+    var type = util.getType(req);
+
+    var fileName = util.getFileName(req);
+    fileName = decodeURIComponent(fileName);
+
+    var id = type == 1? util.getCtrlId(req) : util.getWorkId(req);
+    var path;
+    // 存在作品或元件
+    if(id){
+        path = util.getCdnDir()+[user_id,type == 1 ? 'ctrl': 'work',id,fileName].join('/');
+    }
+    else{
+        path = util.getCdnDir()+[user_id, 'temp', type == 1 ? 'ctrl': 'work',fileName].join('/');
+    }
+
+  
+
+    fs.unlink(path,function(err){
+      
+        if(err){
+            return util.json(res, {
+                errType: 1,
+                errCode: 9
+            });
+
+        }
+        else{
+            util.getUserAvailableImgsSize(user_id,function(size){
+
+                return util.json(res, {
+                    errType: 0,
+                    errCode: 0,
+                    json:{
+                        available_folder_size:size
+                    }
+                    
+                });  
+
+            });
+     
+        }
+
+    });
+    
+};
 
 
 
