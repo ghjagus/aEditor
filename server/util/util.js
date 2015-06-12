@@ -3,7 +3,7 @@
  */
 var fs = require('fs'),
     path = require('path'),
-    config = require('../config/env/development'),
+    config = require('../config/env/conf'),
     logger = require('../config/logger'),
     getSize = require('get-folder-size');
 
@@ -19,7 +19,9 @@ module.exports.getCdnDir = function () {
 module.exports.getDbUri = function () {
     return config.db;
 };
-
+module.exports.getPort = function(){
+    return config.port;
+};
 /**
  * 从一个目标对象中返回选取指定key组成的对象
  * @param {Object} sourceObj - 目标对象

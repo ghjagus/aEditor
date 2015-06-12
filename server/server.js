@@ -1,7 +1,7 @@
 var express = require('express');
 var app = express();
 var path = require('path');
-var port = process.env.PORT || 3000;
+var port = process.env.PORT;
 var util = require('./util/util');
 var logger = require("./config/logger");
 var bodyParser = require('body-parser');
@@ -12,6 +12,8 @@ app.use(require('morgan')({ "stream": logger.stream }));
 
 // 配置
 require('./config/projectConf')(app);
+
+port = process.env.PORT || util.getPort();
 
 // templates
 require('./config/templates')(app, path.join(__dirname, 'app/views'));

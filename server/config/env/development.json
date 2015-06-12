@@ -3,5 +3,6 @@
     "db":"mongodb://127.0.0.1:27017/aeditorx",
     "cdn":"public/cdn/",
     "err":"devErrorCode.json",
-    "loggerDir": "logs"
+    "loggerDir": "logs",
+    "port":3000
 }

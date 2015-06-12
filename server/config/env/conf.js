@@ -4,7 +4,8 @@
 
 var fs = require('fs');
 var env = {};
-var envFile = __dirname + '/env.json';
+//var envFile = __dirname + '/env.json';
+var envFile = __dirname + '/production.json';
 
 
 if (fs.existsSync(envFile)) {
