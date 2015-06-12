@@ -13,7 +13,7 @@ app.use(require('morgan')({ "stream": logger.stream }));
 // 配置
 require('./config/projectConf')(app);
 
-port = process.env.PORT || util.getPort();
+port = port || util.getPort();
 
 // templates
 require('./config/templates')(app, path.join(__dirname, 'app/views'));
