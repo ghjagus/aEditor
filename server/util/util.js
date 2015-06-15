@@ -22,6 +22,15 @@ module.exports.getDbUri = function () {
 module.exports.getPort = function(){
     return config.port;
 };
+
+module.exports.getDBUser = function(){
+    return config.user;
+};
+
+module.exports.getDBPass = function(){
+    return config.pass;
+};
+
 /**
  * 从一个目标对象中返回选取指定key组成的对象
  * @param {Object} sourceObj - 目标对象

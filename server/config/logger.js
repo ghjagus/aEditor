@@ -1,7 +1,6 @@
 var winston = require('winston');
 var fs = require('fs');
 
-
 winston.emitErrs = true;
 
 var logger = new winston.Logger({
@@ -38,9 +37,9 @@ var logger = new winston.Logger({
 });
 
 // 如果不存在logs目录，则创建一个
-var logerDir = 'logss';
+var logerDir = 'logs';
 if(!fs.existsSync(logerDir)){
-    fs.mkdirsSync(logerDir);
+    fs.mkdirSync(logerDir);
 }
 
 module.exports = logger;
