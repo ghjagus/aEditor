@@ -1,11 +1,9 @@
-/**
- * Created by fujunou on 2015/4/21.
- */
-
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var request = require('request');
 var util = require('../util/util');
+var logger = require("../config/logger");
+
 
 module.exports = function (app) {
     app.use(bodyParser.json());
@@ -16,7 +14,7 @@ module.exports = function (app) {
     app.use(function (req, res, next) {
         var token = req.cookies.SID;
         var reqOpt = {
-            url: 'http://10.18.87.64:10000/api/public/user/info',
+            url: util.getUserIdUri(),
             method: 'get',
             headers: {
                 'cookie': 'SID='+token
@@ -36,17 +34,29 @@ module.exports = function (app) {
             }
         });
 
+        if(! token) {
+            return util.unLogin(res, req);
+        }
+
         if(useThisMd) {
             // 没有user_id,就当作没登录
             if(! util.getUid(req)) {
-                return util.unLogin(res);
+                return util.unLogin(res,req);
             }
 
             request(reqOpt, function (err, response, body) {
+                var loginRet = JSON.parse(body);
                 if(err) {
-                    util.unLogin(res);
+                    util.unLogin(res, req);
                 } else {
-                    next();
+                    if(loginRet.hasOwnProperty('user') && loginRet.user.uid === util.getUid(req)) {
+                        next();
+                    } else {
+                        return util.json(res, req, {
+                            errType: 2,
+                            errCode: 12
+                        });
+                    }
                 }
             });
         } else {

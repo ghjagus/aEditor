@@ -1,7 +1,3 @@
-/**
- * Created by fujunou on 2015/4/21.
- */
-
 var mongoose = require('mongoose');
 var util = require('../util/util');
 

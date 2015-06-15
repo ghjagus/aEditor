@@ -1,7 +1,3 @@
-/**
- * Created by fujunou on 2015/4/21.
- */
-
 var fs = require('fs');
 var env = {};
 //var envFile = __dirname + '/development.json';

@@ -24,9 +24,6 @@ var getModel = function (type) {
 };
 
 
-
-
-
 // 创建与修改
 module.exports.upsert = function (req, res, next) {
     var postData = req.body,
@@ -35,8 +32,6 @@ module.exports.upsert = function (req, res, next) {
         // 默认为0（作品），1（元件）
         type = +postData.type || 0, uid,
         typeKey = type == 1 ? 'ctrl' : 'work';
-
-   
 
     switch (type) {
         case 0:
@@ -76,7 +71,7 @@ module.exports.upsert = function (req, res, next) {
 
             if (err) {
                 // 返回错误
-                return util.json(res, {
+                return util.json(res, req, {
                     errType: 2,
                     errCode: 2
                 });
@@ -117,7 +112,7 @@ module.exports.upsert = function (req, res, next) {
                             return;
                         }
 
-                        return util.json(res, {
+                        return util.json(res, req, {
                             errType: 0,
                             json: getJsonData(type, data),
                             jsonMsg: '更新'+tip+'成功'
@@ -137,13 +132,13 @@ module.exports.upsert = function (req, res, next) {
     // 从cookie中赋值的，所以肯定会相同
     $model.findByIdAndUpdate(conditions._id, modelData, function (err, data) {
         if (err || data == null) {
-            return util.json(res, {
+            return util.json(res, req, {
                 errType: 2,
                 errCode: 3
             });
         }
 
-        return util.json(res, {
+        return util.json(res, req, {
             errType: 0,
             json: getJsonData(type, data),
             jsonMsg: '更新'+tip+'成功'
@@ -169,7 +164,7 @@ module.exports.delete = function (req, res, next) {
     }
 
     if(id == null) {
-        return util.json(res, {
+        return util.json(res, req, {
             errType: 1,
             errCode: 1
         });
@@ -180,14 +175,14 @@ module.exports.delete = function (req, res, next) {
     // 删除一个已经存在的作品直接报错
     $model.count({_id: {$eq: id}, is_delete: '0'}, function(err, count) {
         if (err) {
-            return util.json(res, {
+            return util.json(res, req, {
                 errType: 2,
                 errCode: 6
             });
         }
 
         if(count == 0) {
-            return util.json(res, {
+            return util.json(res, req, {
                 errType: 2,
                 errCode: 8
             });
@@ -195,7 +190,7 @@ module.exports.delete = function (req, res, next) {
 
         $model.findByIdAndUpdate({_id: {$eq: id}}, {is_delete: '1'}, function(err, result) {
             if (err) {
-                return util.json(res, {
+                return util.json(res, req, {
                     errType: 2,
                     errCode:7
                 });
@@ -205,7 +200,7 @@ module.exports.delete = function (req, res, next) {
             //同时删除图片文件夹
             util.rmdirsSync(workPath);
 
-            util.json(res, {
+            util.json(res, req, {
                 errType: 0,
                 json: {
                     msg: '删除成功'
@@ -245,7 +240,7 @@ module.exports.query = function (req, res, next) {
     // TODO 优化页数查询
     $model.count(_contions, function(err, count) {
         if (err) {
-            return util.json(res, {
+            return util.json(res, req, {
                 errType: 2,
                 errCode: 4
             });
@@ -261,14 +256,14 @@ module.exports.query = function (req, res, next) {
         .sort({'update_time': 1})
         .exec(function(err, results) {
             if (err) {
-                return util.json(res, {
+                return util.json(res, req, {
                     errType: 2,
                     errCode: 5
                 });
             }
 
             if(type === 0) {
-                util.json(res, {
+                util.json(res, req, {
                     errType: 0,
                     json: {
                         works: results,
@@ -278,7 +273,7 @@ module.exports.query = function (req, res, next) {
                     }
                 });
             } else {
-                util.json(res, {
+                util.json(res, req, {
                     errType: 0,
                     json: {
                         ctrls: results,
@@ -295,8 +290,6 @@ module.exports.query = function (req, res, next) {
 function getImageResults(userId,results,type,fileObj,callback){
 
      var i = 0;   
-
-
 
     // 获取每个作品图片文件夹
     results.forEach(function(result){
@@ -321,8 +314,6 @@ function getImageResults(userId,results,type,fileObj,callback){
             imgsDir = path.join(userId, 'temp/ctrl');
             name = 'tempctrl';
         }
-
-
 
         // 读取作品文件夹内的图片文件
         fs.readdir(util.getCdnDir() + '/' + imgsDir, function(err, files){
@@ -360,7 +351,6 @@ function getImageResults(userId,results,type,fileObj,callback){
     });
 }
 
-
 // 获取某用户的所有图片(根据文件夹划分)
 module.exports.getAllImgs  = function (req, res) {
 
@@ -391,7 +381,7 @@ module.exports.getAllImgs  = function (req, res) {
         if(finishCount == 5){
 
             // 返回图片列表
-            util.json(res, {
+            util.json(res, req, {
                 errType: 0,
                 json:{
                     img_files:fileObj,
@@ -413,7 +403,7 @@ module.exports.getAllImgs  = function (req, res) {
         .sort({'update_time': 1})
         .exec(function(err, results) {
             if (err) {
-                return util.json(res, {
+                return util.json(res, req, {
                     errType: 2,
                     errCode: 5
                 });
@@ -427,7 +417,7 @@ module.exports.getAllImgs  = function (req, res) {
         .sort({'update_time': 1})
         .exec(function(err, results) {
             if (err) {
-                return util.json(res, {
+                return util.json(res, req, {
                     errType: 2,
                     errCode: 5
                 });

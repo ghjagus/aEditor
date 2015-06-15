@@ -1,6 +1,3 @@
-/**
- * Created by fujunou on 2015/4/21.
- */
 var ctrls = require('../app/ctrls/crudCtrl');
 var files = require('../app/ctrls/filesCtrl');
 var oauth = require('../app/ctrls/oauthCtrl');

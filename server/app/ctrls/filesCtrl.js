@@ -73,7 +73,7 @@ module.exports.upload = function(req, res) {
 
     // 对base64串作检测
     if(! /^data:(.*);base64,/.test(imgBase64Str) && imgBase64Str.length < 100) {
-        return util.json(res, {
+        return util.json(res, req, {
             errType: 1,
             errCode: 6
         });
@@ -102,7 +102,7 @@ module.exports.upload = function(req, res) {
     // 如果图片已经存在，返回已存在图片的地址
     if(fs.existsSync(imgReName)) {
         //imgReName = path.join(cndFolder, path.basename(imgReName, imgExtName) + '0'+imgExtName);
-        util.json(res, {
+        util.json(res, req, {
             errType: 0,
             json: {
                 url: util.uriChange(imgReName)
@@ -116,7 +116,7 @@ module.exports.upload = function(req, res) {
     util.getUserAvailableImgsSize(userID,function(size){
         // 超过最大存储空间限制
         if(imgData.length / 1024 / 1024 > size){
-            util.json(res, {
+            util.json(res, req, {
                 errType: 1,
                 errCode:11
             }); 
@@ -133,13 +133,13 @@ module.exports.upload = function(req, res) {
                 .run(function(err){
                     if(err){
                         // 压缩失败
-                       util.json(res, {
+                       util.json(res, req, {
                             errType: 1,
                             errCode: 8
                         });         
                     }
                     else{
-                        util.json(res, {
+                        util.json(res, req, {
                             errType: 0,
                             json: {
                                 url: util.uriChange(imgReName)
@@ -184,7 +184,7 @@ module.exports.deleteUserImage = function(req, res){
     fs.unlink(path,function(err){
       
         if(err){
-            return util.json(res, {
+            return util.json(res, req, {
                 errType: 1,
                 errCode: 9
             });
@@ -193,7 +193,7 @@ module.exports.deleteUserImage = function(req, res){
         else{
             util.getUserAvailableImgsSize(user_id,function(size){
 
-                return util.json(res, {
+                return util.json(res, req, {
                     errType: 0,
                     errCode: 0,
                     json:{
@@ -258,7 +258,7 @@ module.exports.workdownloads = function (req, res) {
 
         workModel.count(conditions, function(err, count) {
             if (err) {
-                return util.json(res, {
+                return util.json(res, req, {
                     errType: 2,
                     errCode: 9
                 });
@@ -291,7 +291,7 @@ module.exports.workdownloads = function (req, res) {
 
                 archive.finalize();
             } else {
-                return util.json(res, {
+                return util.json(res, req, {
                     errType: 2,
                     errCode: 10
                 });
@@ -299,7 +299,7 @@ module.exports.workdownloads = function (req, res) {
         })
 
     } else {
-        return util.json(res, {
+        return util.json(res, req, {
             errType: 1,
             errCode: 1
         });
@@ -314,7 +314,7 @@ module.exports.createJsFile = function (req, res, next) {
     var jsFileDir = path.join(util.getCdnDir(), '/js/'+userId);
     var jsFilePath = path.join(jsFileDir, '/main.js');
     if(! jscode || !userId) {
-        return util.json(res, {
+        return util.json(res, req, {
             errType: 1,
             errCode: 1
         });
@@ -333,13 +333,13 @@ module.exports.createJsFile = function (req, res, next) {
 
     fs.writeFile(jsFilePath, [';',jscode,';'].join(''), function (err) {
         if (err) {
-            return util.json(res, {
+            return util.json(res, req, {
                 errType: 2,
                 errCode: 11
             });
         };
 
-        util.json(res, {
+        util.json(res, req, {
             errType: 0,
             json: {
                 msg: '生成JS文件成功'
@@ -358,7 +358,7 @@ module.exports.deleteTempDir = function (req, res) {
     deleteTempWorkDir(uid);
     deleteTempControllerDir(uid);
 
-    util.json(res, {
+    util.json(res, req, {
         errType: 0,
         json: {
             msg: '清空temp目录成功'
@@ -369,7 +369,7 @@ module.exports.deleteTempDir = function (req, res) {
 module.exports.deleteTempControllerDir = function(req, res){
     var uid = util.getUid(req);
     deleteTempControllerDir(uid);
-    util.json(res, {
+    util.json(res, req, {
         errType: 0,
         json: {
             msg: '清空元件temp目录成功'
