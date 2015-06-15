@@ -26,7 +26,6 @@
     "morgan": "^1.5.3",
     "optimage": "~0.2.0",
     "optipng-bin": "~3.0.2",
-    "path": "^0.11.14",
     "request": "^2.55.0",
     "winston": "^1.0.0"
   },
