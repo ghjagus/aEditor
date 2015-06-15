@@ -38,9 +38,9 @@ var logger = new winston.Logger({
 });
 
 // 如果不存在logs目录，则创建一个
-var logerDir = 'logs';
+var logerDir = 'logss';
 if(!fs.existsSync(logerDir)){
-    util.mkdirsSync(logerDir);
+    fs.mkdirsSync(logerDir);
 }
 
 module.exports = logger;

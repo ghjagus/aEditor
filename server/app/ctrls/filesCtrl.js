@@ -9,12 +9,9 @@ var stream = require('stream');
 var util = require('../../util/util');
 var archiver = require('archiver');
 var workModel = require('../models/workModel');
-var imagemin = require('image-min');
 var fileCompare = require('file-compare');
 
 var execFile = require('child_process').execFile;
-var optipng = require('optipng-bin');
-var optimage = require('optimage');
 
 
 
