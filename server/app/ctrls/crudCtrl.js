@@ -115,7 +115,7 @@ module.exports.upsert = function (req, res, next) {
                         return util.json(res, req, {
                             errType: 0,
                             json: getJsonData(type, data),
-                            jsonMsg: '更新'+tip+'成功'
+                            jsonMsg: '新增'+tip+'成功'
                         });
                     });
 
