@@ -53,7 +53,7 @@ module.exports.getObjKeysMap = function (sourceObj, keyArr) {
     var retObj = {};
 
     keyArr.forEach(function (key, index) {
-        if (Object.hasOwnProperty.call(sourceObj.hasOwnProperty,key) && sourceObj[key] !== undefined) {
+        if (Object.hasOwnProperty.call(sourceObj,key) && sourceObj[key] !== undefined) {
             retObj[key] = sourceObj[key];
         }
     });
