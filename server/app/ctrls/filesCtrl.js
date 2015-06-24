@@ -129,6 +129,7 @@ module.exports.upload = function(req, res) {
          
                 new Imagemin()
                 .src(imgReName)
+                .use(Imagemin.jpegtran({progressive: true}))
                 .dest(cndFolder)
                 .run(function(err){
                     if(err){
