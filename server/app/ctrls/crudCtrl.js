@@ -379,7 +379,7 @@ module.exports.getAllImgs  = function (req, res) {
         finishCount ++;
 
         console.log('count:' + finishCount);
-        
+
         // 完成
         if(finishCount == 5){
 
@@ -405,6 +405,7 @@ module.exports.getAllImgs  = function (req, res) {
         .select('name work_data')
         .sort({'update_time': 1})
         .exec(function(err, results) {
+            console.log('err:' + err);
             if (err) {
                 return util.json(res, req, {
                     errType: 2,
@@ -419,6 +420,7 @@ module.exports.getAllImgs  = function (req, res) {
         .select('name ctrl_data')
         .sort({'update_time': 1})
         .exec(function(err, results) {
+            console.log('err:' + err);
             if (err) {
                 return util.json(res, req, {
                     errType: 2,
