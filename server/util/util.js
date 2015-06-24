@@ -52,7 +52,7 @@ module.exports.getObjKeysMap = function (sourceObj, keyArr) {
     sourceObj = sourceObj || {};
     var retObj = {};
     if(!sourceObj.hasOwnProperty){
-        console.log(sourceObj);
+        console.log('show:' + typeof sourceObj);
     }
     keyArr.forEach(function (key, index) {
         if (sourceObj.hasOwnProperty(key) && sourceObj[key] !== undefined) {
