@@ -403,7 +403,7 @@ module.exports.getAllImgs  = function (req, res) {
     // 获取作品图片
     $work_model.find(_contions)
         .select('name work_data')
-        .sort({'update_time': 1})
+        .skip(0)
         .exec(function(err, results) {
             console.log('err:' + err);
             if (err) {
@@ -418,7 +418,7 @@ module.exports.getAllImgs  = function (req, res) {
     // 获取元件图片
     $ctrl_model.find(_contions)
         .select('name ctrl_data')
-        .sort({'update_time': 1})
+        .skip(0)
         .exec(function(err, results) {
             console.log('err:' + err);
             if (err) {
