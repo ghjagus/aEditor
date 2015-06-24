@@ -377,6 +377,9 @@ module.exports.getAllImgs  = function (req, res) {
     var callback = function(){
   
         finishCount ++;
+
+        console.log('count:' + finishCount);
+        
         // 完成
         if(finishCount == 5){
 
