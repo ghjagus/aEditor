@@ -361,7 +361,10 @@ module.exports.deleteTempDir = function (req, res) {
     util.json(res, req, {
         errType: 0,
         json: {
-            msg: '清空temp目录成功'
+            msg: '清空temp目录成功',
+            json:{
+                user_id:uid
+            }
         }
     });
 };
