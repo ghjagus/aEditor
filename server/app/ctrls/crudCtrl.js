@@ -9,7 +9,7 @@ var util = require('../../util/util');
 var path = require('path');
 var fs = require('fs');
 
-var baseUrl = 'http://aeditor.alloyteam.com:3000/';
+var baseUrl = 'http://aeditor.alloyteam.com/';
 
 var getJsonData = function getJsonData(type, data) {
     return type === 0 ? {
