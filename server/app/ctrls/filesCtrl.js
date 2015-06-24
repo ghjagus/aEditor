@@ -132,28 +132,29 @@ module.exports.upload = function(req, res) {
                 .use(Imagemin.jpegtran({progressive: true}))
                 .dest(cndFolder)
                 .run(function(err){
-                    if(err){
-                        console.log('error:' + err);
-                        // 压缩失败
-                       // util.json(res, req, {
-                       //      errType: 1,
-                       //      errCode: 8
-                       //  });   
-                        util.json(res, req, {
-                            errType: 0,
-                            json: {
-                                url: util.uriChange(imgReName)
-                            }
-                        });          
-                    }
-                    else{
-                        util.json(res, req, {
-                            errType: 0,
-                            json: {
-                                url: util.uriChange(imgReName)
-                            }
-                        });                
-                    }
+                    // if(err){
+                    //     console.log('error:' + err);
+                    //     // 压缩失败
+                    //    util.json(res, req, {
+                    //         errType: 1,
+                    //         errCode: 8
+                    //     });   
+
+                    // }
+                    // else{
+                    //     util.json(res, req, {
+                    //         errType: 0,
+                    //         json: {
+                    //             url: util.uriChange(imgReName)
+                    //         }
+                    //     });                
+                    // }
+                    util.json(res, req, {
+                        errType: 0,
+                        json: {
+                            url: util.uriChange(imgReName)
+                        }
+                    });  
                 });
 
             });
