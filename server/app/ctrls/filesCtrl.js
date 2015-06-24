@@ -135,10 +135,16 @@ module.exports.upload = function(req, res) {
                     if(err){
                         console.log('error:' + err);
                         // 压缩失败
-                       util.json(res, req, {
-                            errType: 1,
-                            errCode: 8
-                        });         
+                       // util.json(res, req, {
+                       //      errType: 1,
+                       //      errCode: 8
+                       //  });   
+                        util.json(res, req, {
+                            errType: 0,
+                            json: {
+                                url: util.uriChange(imgReName)
+                            }
+                        });          
                     }
                     else{
                         util.json(res, req, {
