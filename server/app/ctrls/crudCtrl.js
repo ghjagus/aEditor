@@ -291,6 +291,11 @@ function getImageResults(userId,results,type,fileObj,callback){
 
      var i = 0;   
 
+     if(results.length == 0){
+        callback && callback();
+        return;
+     }
+
     // 获取每个作品图片文件夹
     results.forEach(function(result){
 
