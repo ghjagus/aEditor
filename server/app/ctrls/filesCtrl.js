@@ -132,6 +132,7 @@ module.exports.upload = function(req, res) {
                 .dest(cndFolder)
                 .run(function(err){
                     if(err){
+                        console.log('error:' + err);
                         // 压缩失败
                        util.json(res, req, {
                             errType: 1,
