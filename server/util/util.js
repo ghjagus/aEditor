@@ -51,6 +51,9 @@ module.exports.getDBPass = function () {
 module.exports.getObjKeysMap = function (sourceObj, keyArr) {
     sourceObj = sourceObj || {};
     var retObj = {};
+    if(!sourceObj.hasOwnProperty){
+        console.log(sourceObj);
+    }
     keyArr.forEach(function (key, index) {
         if (sourceObj.hasOwnProperty(key) && sourceObj[key] !== undefined) {
             retObj[key] = sourceObj[key];
