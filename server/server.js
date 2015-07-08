@@ -22,7 +22,7 @@ require('./config/templates')(app, path.join(__dirname, 'app/views'));
 require('./config/mongo')();
 
 // 存放用户上传资源
-app.use('./public/',express.static(path.join(__dirname, util.getCdnDir())));
+app.use(express.static(path.join(__dirname, util.getCdnDir())));
 
 // 上传大小限制
 app.use(bodyParser.json({limit: '2mb'}));
