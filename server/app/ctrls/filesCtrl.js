@@ -68,8 +68,7 @@ module.exports.upload = function(req, res) {
 
     var cndFolder;
     var imgName = req.body.img_name || util.guid();
-    var imgExtName,
-        imgTempReName;
+    var imgExtName;
 
     // 对base64串作检测
     if(! /^data:(.*);base64,/.test(imgBase64Str) && imgBase64Str.length < 100) {
@@ -96,8 +95,8 @@ module.exports.upload = function(req, res) {
 
     imgExtName = '.'+util.getBase64ExtName(imgBase64Str);
 
-    imgReName = path.join(cndFolder, imgName + imgExtName);
-    imgTempReName = path.join(cndFolder, 'temp_' + imgName + imgExtName);
+    imgReName = path.join('public',cndFolder, imgName + imgExtName);
+ 
 
     // 如果图片已经存在，返回已存在图片的地址
     if(fs.existsSync(imgReName)) {
