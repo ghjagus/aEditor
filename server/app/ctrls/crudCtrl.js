@@ -334,7 +334,7 @@ function getImageResults(userId,results,type,fileObj,callback){
                
                 // 该作品内的图片
                 files.forEach(function(imgFile){
-                    var url = imgsDir + '\\' + imgFile;
+                    var url = 'public\\' + imgsDir + '\\' + imgFile;
                     url = url.replace(/\\/g,'/');
 
                     fileObj[name][result.id].imgList.push(baseUrl + url);
