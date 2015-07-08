@@ -151,7 +151,7 @@ module.exports.upload = function(req, res) {
                     util.json(res, req, {
                         errType: 0,
                         json: {
-                            url: util.uriChange(imgReName)
+                            url: 'public/' + util.uriChange(imgReName)
                         }
                     });  
                 });
