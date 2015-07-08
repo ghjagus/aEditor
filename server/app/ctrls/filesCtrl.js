@@ -95,7 +95,7 @@ module.exports.upload = function(req, res) {
 
     imgExtName = '.'+util.getBase64ExtName(imgBase64Str);
 
-    imgReName = path.join('public',cndFolder, imgName + imgExtName);
+    imgReName = path.join(cndFolder, imgName + imgExtName);
  
 
     // 如果图片已经存在，返回已存在图片的地址
@@ -104,7 +104,7 @@ module.exports.upload = function(req, res) {
         util.json(res, req, {
             errType: 0,
             json: {
-                url: util.uriChange(imgReName)
+                url: util.uriChange('public/' + imgReName)
             }
         });
         return;
