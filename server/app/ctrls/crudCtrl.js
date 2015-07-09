@@ -268,7 +268,7 @@ module.exports.query = function (req, res, next) {
                     errType: 0,
                     json: {
                         works: results,
-                        total_page: Math.floor(total / size), // 总页数
+                        total_page: Math.ceil(total / size), // 总页数
                         cur_page:page, // 当前页数
                         length: total // 总的结果数
                     }
@@ -278,7 +278,7 @@ module.exports.query = function (req, res, next) {
                     errType: 0,
                     json: {
                         ctrls: results,
-                        total_page: Math.floor(total / size),
+                        total_page: Math.ceil(total / size),
                         cur_page:page,
                         length: total
                     }
