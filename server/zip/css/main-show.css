@@ -2,6 +2,9 @@
 	margin:0;
 	padding: 0;
 }
+body{
+	font-family: -apple-system-font, "Helvetica Neue", Helvetica, STHeiTi, sans-serif;
+}
 .main-show-container {
 	display: none;
 }
