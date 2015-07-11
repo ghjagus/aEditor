@@ -26,7 +26,20 @@ module.exports.doLogin = function (req, res) {
         if(err || ! uid) {
             util.unLogin(res, req);
         } else {
-            var html = '<script>document.domain="alloyteam.com";top.loginCb({"uid":"'+uid+'"});</script>';
+            var html = '<script>document.domain="alloyteam.com";\
+            if(top != this){\
+                top.loginCb({"uid":"'+uid+'"});\
+            }\
+            else{\
+                localStorage.setItem("crossWindowSuccess","1");\
+                setTimeout(function(){\
+                    window.opener=null;\
+                    window.open("","_self");\
+                    window.close();\
+                },500);\
+            }\
+            </script>';
+
             // user_id保存一个月
             res.cookie('user_id', uid, { expires: new Date(Date.now() + 2592000000), httpOnly: true });
             res.type('.html');
