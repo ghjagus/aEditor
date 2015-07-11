@@ -31,7 +31,7 @@ module.exports.doLogin = function (req, res) {
                 top.loginCb({"uid":"'+uid+'"});\
             }\
             else{\
-                localStorage.setItem("crossWindowSuccess","1");\
+                localStorage.setItem("crossWindowSuccessUid","'+ uid +'");\
                 setTimeout(function(){\
                     window.opener=null;\
                     window.open("","_self");\
