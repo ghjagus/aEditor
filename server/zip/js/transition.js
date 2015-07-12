@@ -9,12 +9,10 @@
     }
 })(this,function(){
 
-    'use strict';
-
     //动画默认配置项
     var config = {
         duration:2,
-        type:"ease-out",
+        type:'linear',
         nextDuration:0,
         use3d:true,
         defaultKeyAnimationName:'key-animation'
@@ -88,18 +86,6 @@
                 if(needPxUnit(n) && !isNaN(Number(newSingleFrameObj[n]))){
                     newSingleFrameObj[n] += 'px';
                 }
-                //外部手机端页面,translateX替换成按屏幕比例的x值(如果之后这里涉及元件，元件要特殊处理一下，不能相对于手机屏幕设置宽度)
-                // if(n == '-webkit-transform' && isMobile){
-
-                //     var winWidth = window.innerWidth;
-
-                //     newSingleFrameObj[n] = newSingleFrameObj[n].replace(/translateX\((.*?)\)/g,function(str,value){
-                //         var value = Number(value.replace('px',''));
-                     
-                //         return 'translateX(' + ((value / 320) * winWidth) + 'px)';
-                //     });
-                  
-                // }
 
                 keyFramesStrArr.push(n + ':' + newSingleFrameObj[n] + ';');
             }
@@ -107,10 +93,6 @@
 
        return singleFrameName + '{' + keyFramesStrArr.join('') + '}';
     
-        // return (singleFrameName + JSON.stringify(newSingleFrameObj))
-        //                         .replace(/\"/g,'')
-        //                         .replace(/\,/g,';')
-        //                         .replace(/\;base64\;/g,';base64,');
     };
     //生成keyframe css动画字符串
     function createKeyframesStyle(keyAnimationName,keyframesObj){
@@ -127,19 +109,14 @@
                 //生成单个动画字符串
                 var singleAnimationStr = createSingleFrameString(kn,keyframesObj[kn]);
                 frameAnimationStringArr.push(singleAnimationStr);
-                //singleAnimationStr.a_percent = kn.replace('%','');
             }
         }
-        //根据百分号排序一下输出
-        // frameAnimationStringArr.sort(function(s1,s2){
-        //     return s1.a_percent > s2.a_percent;
-        // });
+
         frameAnimationStringArr.push('}');
 
         //生成动画keyframe串
         var animationStyleString = frameAnimationStringArr.join(' ');
-        //生成随机id
-        //var id = ~~(Math.random() * 1e8);
+
         //新的style标签
         var newStyle = $('<style></style>',{
             class:"animation-style"
@@ -183,9 +160,7 @@
         },
         play:function(){
 
-            console.log('play');
             var transitionObj = this.transitionObj;
-
             var transitionElem;
             //有现成元素使用现成元素
             if(transitionObj.elem){
@@ -227,7 +202,6 @@
 
                 //设置元素的动画样式
                 transitionElem.css(cssObj);
-
                 transitionElem.addClass('running-sprite');
 
                 //修改元素上正在播放的动画的帧展示栏的renderId
@@ -243,16 +217,16 @@
             //该动画的结束
             $(transitionObj.elem).off('webkitAnimationEnd');
             $(transitionObj.elem).on('webkitAnimationEnd',function(e){
+                var lastCssProperties;
                 e.stopPropagation();
-                
-                // if(transitionObj.imgFileName == '0.png'){
-                //     debugger;
-                //     window.bb = transitionObj;
-                    
-                // }
 
                 var animationName = (e.originalEvent || e)['animationName'];
-                var lastCssProperties = transitionObj.keyframes['100%'];
+
+
+                if(transitionObj.keyframes){
+                    lastCssProperties = transitionObj.keyframes['100%'];
+                }
+                
 
                 //单个并行动画结束的回调e
                 transitionObj.callback && transitionObj.callback({
@@ -299,11 +273,7 @@
 
     Transition.prototype = {
         init:function(opt){
-            // this.container = opt.container || $('body');
-            // this.container.addClass('t-container');
-
             this.t_obj_arr = [];
-            
             this.bind();
         },
         bind:function(){
@@ -336,13 +306,13 @@
 
                 setTimeout(function(){
                     //播放下一组动画
-                    self.playSingleLoop(next_t_obj);
+                    self.playListAnimation(next_t_obj);
 
                 }, (nextDuration || config.nextDuration) *  1000);
             }
         },
-        //播放一组动画
-        playSingleLoop:function(t_obj){
+        //并行播放一组动画
+        playListAnimation:function(t_obj){
             var self = this;
             //该obj的所有transition的队列
             var transitionArr = t_obj.transitionArr || [];
@@ -383,6 +353,7 @@
                 });
             }
         },
+        // 播放所有的动画
         run:function(){
             var self = this;
             var t_obj_arr = this.t_obj_arr;
@@ -395,7 +366,7 @@
             //开始播放动画
             if(t_obj_arr.length > 0){
                 var t_obj = t_obj_arr.shift();
-                self.playSingleLoop(t_obj);
+                self.playListAnimation(t_obj);
             }
             else{
                 this.running = false;
@@ -449,7 +420,7 @@
         }
 
     };
-
+    // 播放单个元素的动画
     Transition.playSingle = function(transitionObj){
         var t = new SingleTransition(transitionObj);
         t.play();
@@ -458,6 +429,7 @@
 
     Transition.createKeyframesStyle = createKeyframesStyle;
     Transition.createAnimationStyleObj = createAnimationStyleObj;
+    Transition.filterAndroid23Transform = filterAndroid23Transform;
 
     return Transition;
 });
